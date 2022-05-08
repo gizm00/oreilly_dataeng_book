@@ -1,8 +1,8 @@
 
-from util import species_list
+from .util import species_list
 
-def create_fake_data():
-    fake_data = [
+def create_mock_data():
+    mock_data = [
         {
             "user": "something@email.com",
             "location": "45.12431, 121.12453",
@@ -32,4 +32,4 @@ def create_fake_data():
         {"user": "third@email.com", "species": ""},  
     ]
 
-    return fake_data, expected
+    return mock_data, expected
