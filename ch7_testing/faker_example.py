@@ -1,7 +1,7 @@
 import random
 
 from faker import Faker
-from .util import species_list
+import util
 
 fake = Faker()
 
@@ -12,7 +12,7 @@ def create_mock_data(length=1):
         add_species = fake.pybool()
         user = fake.email()
         if add_species:
-            species = fake.words(ext_word_list=species_list, nb=random.randint(0,1)) # should be nb=1 w/ add_species bool
+            species = fake.words(ext_word_list=util.species_list, nb=random.randint(0,1)) # should be nb=1 w/ add_species bool
             description = ' '.join(fake.words(nb=5) + species + fake.words(nb=5))
         else:
             species = '' # Empty string is what regexp_match will return if no match

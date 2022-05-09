@@ -1,34 +1,28 @@
-from hypothesis import given, composite
+from hypothesis import given
 from hypothesis import strategies as st
 import string
 
 import pytest
 
-from util import species_list
+import util
 names = st.text(alphabet=string.ascii_letters)
 
 @given(names)
 def test_names(names):
     print(names)
 
-words=st.lists(st.text(alphabet=string.ascii_letters, min_size=1), min_size=3, max_size=5)
-species=st.sampled_from(species_list + [''])
+words=st.lists(st.text(alphabet=string.ascii_letters, min_size=0), min_size=3, max_size=5)
+species_st=st.sampled_from(util.species_list + [''])
 
 
-@composite
+@st.composite
 def description(draw):
     start = draw(words) 
-    species = draw(species) 
+    species = draw(species_st) 
     end = draw(words)
-    return (species, ' '.join(start + species + end))
+    sentence = ' '.join(start + [species] + end)
+    return (species, sentence)
 
-@given(description)
-def test_description(desc):
-    print(desc)
-    species = desc[0]
-    desc = desc[1]
-    if species != '':
-        assert species in desc
 
 # @given(st.lists(st.integers()))
 # def test_reversing_twice_gives_same_list(xs):

@@ -1,5 +1,5 @@
 
-from .util import species_list
+import util
 
 def create_mock_data():
     mock_data = [

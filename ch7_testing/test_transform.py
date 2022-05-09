@@ -1,55 +1,48 @@
-from hypothesis import given
+from this import d
+import faker_example
+import manual_example
+import transform
+
+from hypothesis import given, settings
 from hypothesis import strategies as st
 import string
-
 import pytest
+from pyspark.sql import SparkSession
 
-from .util import species_list
-names = st.text(alphabet=string.ascii_letters)
+import util
+from hypothesis_example import description
 
-@given(names)
-def test_names(names):
-    print(names)
+# The first time the spark fixture is used, the startup time will be
+# part of the test time. Without deadline=None, hypothesis will recognize
+# the outlier runtime and mark it as an error, as it can be indicative of
+# flaky test behavior.
+# https://hypothesis.readthedocs.io/en/latest/settings.html?highlight=deadline#hypothesis.settings.deadline
+@settings(deadline=None)
+@given(description(), st.emails())
+def test_description(spark_context, description, emails):
+    species = description[0]
+    desc = description[1]
 
-words=st.lists(st.text(alphabet=string.ascii_letters, min_size=1), min_size=3, max_size=5)
-species=st.sampled_from(species_list + [''])
-
-
-@st.composite
-def description(draw):
-    start = draw(words) 
-    species = draw(species) 
-    end = draw(words)
-    return (species, ' '.join(start + species + end))
-
-@given(description)
-def test_description(desc):
+    test_df = util.df_from_list_dict([{'description': desc, 'user': emails}], spark_context)
+    expected_df = util.df_from_list_dict([{'species': species, 'user': emails}], spark_context)
+    df_with_species = transform.apply_species_label(util.species_list, test_df)
     print(desc)
-    species = desc[0]
-    desc = desc[1]
-    if species != '':
-        assert species in desc
+    assert df_with_species.select('species','user').subtract(expected_df).rdd.isEmpty()
 
+def test_transform_manual():
+    data, expected = manual_example.create_mock_data
 
-# import faker_example as faker_ex
-# import manual_example as manual
-# from transform import apply_species_label
-# from util import df_from_list_dict, species_list
+    test_df = util.df_from_list_dict(data)
+    expected_df = util.df_from_list_dict(expected)
+    df_with_species = transform.apply_species_label(util.species_list, test_df)
 
-# def test_transform_manual():
-#     data, expected = manual.create_mock_data()
+    assert df_with_species.select('species','user').subtract(expected_df).rdd.isEmpty()
 
-#     test_df = df_from_list_dict(data)
-#     expected_df = df_from_list_dict(expected)
-#     df_with_species = apply_species_label(species_list, test_df)
+def test_transform_faker():
+    data, expected = faker_example.create_mock_data(4)
 
-#     assert df_with_species.select('species','user').subtract(expected_df).rdd.isEmpty()
+    test_df = util.df_from_list_dict(data)
+    expected_df = util.df_from_list_dict(expected)
+    df_with_species = transform.apply_species_label(util.species_list, test_df)
 
-# def test_transform_faker():
-#     data, expected = faker_ex.create_mock_data(4)
-
-#     test_df = df_from_list_dict(data)
-#     expected_df = df_from_list_dict(expected)
-#     df_with_species = apply_species_label(species_list, test_df)
-
-#     assert df_with_species.select('species','user').subtract(expected_df).rdd.isEmpty()
+    assert df_with_species.select('species','user').subtract(expected_df).rdd.isEmpty()
