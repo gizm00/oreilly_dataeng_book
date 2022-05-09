@@ -3,7 +3,8 @@ import logging
 import pytest
 from pyspark.sql import SparkSession
 
-# run pytest from top level
+# Starting a spark app is a significant overhead, first test that uses this fixture
+# will take a while to run ~ 20s
 # pyspark unit testing reference: https://blog.cambridgespark.com/unit-testing-with-pyspark-fb31671b1ad8
 def quiet_py4j():
     """Suppress spark logging for the test context."""

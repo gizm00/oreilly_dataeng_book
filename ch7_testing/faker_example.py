@@ -12,14 +12,14 @@ def create_mock_data(length=1):
         add_species = fake.pybool()
         user = fake.email()
         if add_species:
-            species = fake.words(ext_word_list=util.species_list, nb=random.randint(0,1)) # should be nb=1 w/ add_species bool
+            species = fake.words(ext_word_list=util.species_list, nb=1)
             description = ' '.join(fake.words(nb=5) + species + fake.words(nb=5))
         else:
             species = '' # Empty string is what regexp_match will return if no match
             description = ' '.join(fake.words(nb=10))
         expected.append({
             "user": user,
-            "species": species
+            "species": species[0] if species != '' else ''
         })
         mock_data.append(
             {
