@@ -1,3 +1,4 @@
+from copy import copy
 import random
 
 from faker import Faker
@@ -78,8 +79,8 @@ class DescriptionProvider(BaseProvider):
         species_part = species.split(" ")[choice([0,-1])]
         word_list = fake.words(nb=10)
         words_only = ' '.join(word_list)
-        word_list_with_species = word_list
-        word_list_with_part = word_list
+        word_list_with_species = copy(word_list)
+        word_list_with_part = copy(word_list)
         word_list_with_species.insert(choice([0, int(len(word_list)/2), len(word_list)]), species)
         word_list_with_part.insert(choice([0, int(len(word_list)/2), len(word_list)]), species_part)
         with_species  = ' '.join(word_list_with_species)
@@ -88,6 +89,9 @@ class DescriptionProvider(BaseProvider):
         return choice(cases)
 
 fake.add_provider(DescriptionProvider)
+
+for _ in range(10):
+    fake.description()
 
 def description_gen():
     species = fake.words(ext_word_list=species_list, nb=randint(0,1))
