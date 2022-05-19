@@ -1,4 +1,3 @@
-from this import d
 import faker_example
 import manual_example
 import transform
@@ -11,6 +10,20 @@ from pyspark.sql import SparkSession
 
 import util
 from hypothesis_example import description
+
+spark = (SparkSession
+            .builder
+            .master('local[2]')
+            .appName('pytest-pyspark-local-testing')
+            .enableHiveSupport()
+            .getOrCreate())
+# request.addfinalizer(lambda: spark.stop())
+
+# quiet_py4j()
+spark.sparkContext.addPyFile("/Users/gizmo/dev/oreilly_dataeng_book/ch7_testing/util.py")
+sc = spark.sparkContext
+
+
 
 # run pytest with -s to see the test cases printed during execution
 
@@ -32,14 +45,21 @@ def test_transform_hypothesis(spark_context, description, emails):
  
     assert df_with_species.select('species','user').subtract(expected_df).rdd.isEmpty()
 
-def test_transform_manual(spark_context):
+def test_transform_manual():
+    spark_context = sc
     data, expected = manual_example.create_mock_data()
 
     test_df = util.df_from_list_dict(data, spark_context)
-    expected_df = util.df_from_list_dict(expected, spark_context)
     df_with_species = transform.apply_species_label(util.species_list, test_df)
+    expected_df = util.df_from_list_dict(expected, spark_context)
 
-    assert df_with_species.select('species','user').subtract(expected_df).rdd.isEmpty()
+    # this runs in 13s, vs 17s for df subtract
+    # with_species = map(lambda row: row.asDict(), df_with_species.collect())
+    # assert expected == with_species
+
+    diff = df_with_species.select('species','user').subtract(expected_df)
+    diff.show()
+    assert diff.rdd.isEmpty()
 
 def test_transform_faker(spark_context):
     # 4 is not necessarily enough to get a random sample of species + empty
