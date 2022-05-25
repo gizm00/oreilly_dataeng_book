@@ -45,6 +45,7 @@ def test_transform_hypothesis(spark_context, description, emails):
  
     assert df_with_species.select('species','user').subtract(expected_df).rdd.isEmpty()
 
+
 def test_transform_manual():
     spark_context = sc
     data, expected = manual_example.create_mock_data()
@@ -61,13 +62,23 @@ def test_transform_manual():
     diff.show()
     assert diff.rdd.isEmpty()
 
-def test_transform_faker(spark_context):
-    # 4 is not necessarily enough to get a random sample of species + empty
-    data, expected = faker_example.create_mock_data(4)
+def fake_ids(value):
+    if 'species' in str(value):
+        return value
 
-    test_df = util.df_from_list_dict(data, spark_context)
-    expected_df = util.df_from_list_dict(expected, spark_context)
+@pytest.mark.parametrize("data, expected", 
+                        faker_example.create_mock_data(34))
+                        # ids = fake_ids)
+def test_transform_faker(spark_context, data, expected):
+    # data, expected = 
+
+    test_df = util.df_from_list_dict([data], spark_context)
+    expected_df = util.df_from_list_dict([expected], spark_context)
     df_with_species = transform.apply_species_label(util.species_list, test_df)
-    print(df_with_species.show(4, False))
-    print(expected_df.show(4, False))
+
     assert df_with_species.select('species','user').subtract(expected_df).rdd.isEmpty()
+
+@pytest.mark.parametrize("data, expected", 
+                        faker_example.create_mock_data(34))
+def test_data_gen(data, expected):
+    print("data:", data, "\nexpected:", expected)
