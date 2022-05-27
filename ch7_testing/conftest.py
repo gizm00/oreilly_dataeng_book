@@ -1,5 +1,7 @@
 ## fake data generators as python fixtures for using in tests
 import logging
+from unittest import mock
+from unittest.mock import Mock
 import pytest
 from pyspark.sql import SparkSession
 
@@ -36,3 +38,30 @@ def spark_context(request):
 #     data, expected = faker_example.create_mock_data(34)
 #     if "faker_data" in metafunc.fixturenames:
 #         metafunc.parametrize("faker_data, expected", zip(data,expected))
+
+
+@pytest.fixture
+@mock.patch('cloud_examples.storage', autospec=True)
+def storage_mock(storage):
+    blob = Mock()
+    blob.delete = Mock()
+    mock_bucket = Mock()
+    mock_bucket.list_blobs = Mock()
+    mock_bucket.list_blobs.return_value = [blob, blob]
+    client = Mock()
+    client.get_bucket = Mock()
+    client.get_bucket.return_value = mock_bucket
+    storage.Client.return_value = client
+    yield storage
+
+@pytest.fixture
+def client_mock():
+    blob = Mock()
+    blob.delete = Mock()
+    mock_bucket = Mock()
+    mock_bucket.list_blobs = Mock()
+    mock_bucket.list_blobs.return_value = [blob, blob]
+    client = Mock()
+    client.get_bucket = Mock()
+    client.get_bucket.return_value = mock_bucket
+    return client
