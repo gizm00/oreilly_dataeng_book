@@ -1,6 +1,7 @@
 import faker_example
 import manual_example
 import transform
+import mock_from_schema
 
 from hypothesis import given, settings
 from hypothesis import strategies as st
@@ -66,19 +67,21 @@ def fake_ids(value):
     if 'species' in str(value):
         return value
 
-@pytest.mark.parametrize("data, expected", 
-                        faker_example.create_mock_data(34))
-                        # ids = fake_ids)
-def test_transform_faker(spark_context, data, expected):
-    # data, expected = 
 
-    test_df = util.df_from_list_dict([data], spark_context)
-    expected_df = util.df_from_list_dict([expected], spark_context)
+def test_transform_faker(spark_context):
+    data, expected = faker_example.create_mock_data(10)
+
+    test_df = util.df_from_list_dict(data, spark_context)
+    expected_df = util.df_from_list_dict(expected, spark_context)
     df_with_species = transform.apply_species_label(util.species_list, test_df)
 
     assert df_with_species.select('species','user').subtract(expected_df).rdd.isEmpty()
 
-@pytest.mark.parametrize("data, expected", 
-                        faker_example.create_mock_data(34))
-def test_data_gen(data, expected):
-    print("data:", data, "\nexpected:", expected)
+
+from schemas import survey_data
+def test_transform_schema():
+    data, expected = mock_from_schema.generate_data(survey_data)
+    df_with_species = transform.apply_species_label(util.species_list, data)
+    diff = df_with_species.select('species','user').subtract(expected)
+    diff.show()
+    assert diff.rdd.isEmpty()

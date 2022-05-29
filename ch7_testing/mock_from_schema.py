@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql import types as T
+from pyspark.sql.types import LongType, StringType, ArrayType, IntegerType
 import json
 
 from faker_example import fake
@@ -12,33 +12,47 @@ spark = (SparkSession
 # solution cribbed from https://stackoverflow.com/a/53817839
 
 DYNAMIC_NAMED_FIELDS = {
-    ("count", T.LongType()): lambda: fake.random.randint(0, 20),
-    ("description", T.StringType()): lambda: fake.description_only(),
-    ("user",T.StringType()): lambda: fake.email(),
+    ("count", LongType()): lambda: fake.random.randint(0, 20),
+    ("description", StringType()): lambda: fake.description(),
+    ("user",StringType()): lambda: fake.email(),
 }
 
 DYNAMIC_GENERAL_FIELDS = {
-    T.StringType(): lambda: fake.word(),
-    T.LongType(): lambda: fake.random.randint(),
-    T.IntegerType: lambda: fake.random.randint(),
-    T.ArrayType(T.StringType()): lambda: [fake.word() for i in range(fake.random.randint(0,5))]
+    StringType(): lambda: fake.word(),
+    LongType(): lambda: fake.random.randint(),
+    IntegerType: lambda: fake.random.randint(),
+    ArrayType(StringType()): lambda: [fake.word() for i in range(fake.random.randint(0,5))]
 }
 
-def get_value(name, dataType):
-    # If using regular description with both species and description, we could
-    # add a global 1 element dict to hold the value of the description, user, and the
-    # species which could be referenced based on field name
+def update_expected(name, value, expected):
+    if name == 'description':
+        expected['species'] = value[1]
+        return value[0]
+    else:
+        expected['user'] = value
+        return value
+
+def get_value(name, dataType, expected):
     if (name, dataType) in DYNAMIC_NAMED_FIELDS:
-        return DYNAMIC_NAMED_FIELDS.get((name, dataType))()
+        value = DYNAMIC_NAMED_FIELDS.get((name, dataType))()
+        if name in ['user', 'description']:
+            return update_expected(name, value, expected)
+
+        return value
     if dataType in DYNAMIC_GENERAL_FIELDS:
         return DYNAMIC_GENERAL_FIELDS.get(dataType)()
 
 def generate_data(schema, length=1):
     gen_samples = []
+    expected_values = []
     for _ in range(length):
-        gen_samples.append(tuple(map(lambda field: get_value(field.name, field.dataType), schema.fields)))
+        expected = {}
+        gen_samples.append(tuple(map(lambda field: get_value(field.name, field.dataType, expected), schema.fields)))
+        expected_values.append(expected)
 
-    return spark.createDataFrame(gen_samples, schema)
+    mock_data = spark.createDataFrame(gen_samples, schema)
+    expected = spark.sparkContext.parallelize(expected_values).toDF()
+    return mock_data, expected
 
 def create_schema_and_mock_spark(filename, length=1):
     """
@@ -47,8 +61,8 @@ def create_schema_and_mock_spark(filename, length=1):
     the schema from there.
     """
     with open(filename) as f:
-        fake_data = json.load(f)
-    df = spark.sparkContext.parallelize(fake_data).toDF()   
+        sample_data = json.load(f)
+    df = spark.sparkContexparallelize(sample_data).toDF()   
     return generate_data(df.schema, length)
 
 def mock_from_schema_spark(schema, length):
@@ -57,6 +71,7 @@ def mock_from_schema_spark(schema, length):
 
 if __name__ == '__main__':
     from schemas import survey_data
-    df = mock_from_schema_spark(survey_data, 10)
-    df.show()
+    df_data, df_expected = mock_from_schema_spark(survey_data, 10)
+    df_data.show(10, False)
+    df_expected.show(10, False)
     

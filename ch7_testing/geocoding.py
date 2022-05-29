@@ -16,7 +16,7 @@ class GeocodingError(BaseException):
 class GeocodingRetryException(BaseException):
     pass
 
-@tenacity.retry(retry=tenacity.retry_if_exception(GeocodingRetryException),
+@tenacity.retry(retry=tenacity.retry_if_exception_type(GeocodingRetryException),
        stop=tenacity.stop_after_attempt(5),
        wait=tenacity.wait_exponential(multiplier=1, min=4, max=10),
        reraise=True)
