@@ -7,6 +7,19 @@ import util
 
 fake = Faker()
 
+def basic_fake_data():
+    fake = Faker()
+    fake_data = {
+        "user": fake.uuid4(),
+        "location": fake.local_latlng(),
+        "img_files": [f"s3://bucket-name{fake.file_path(depth=2)}"],
+        "description": f"{' '.join(fake.words(nb=10))}",
+        "count": random.randint(0, 20),
+    }
+    for k,v in fake_data.items():
+        print(k, ":", v)
+
+
 
 from faker.providers import BaseProvider
 class DescriptionProvider(BaseProvider):

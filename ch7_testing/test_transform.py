@@ -12,19 +12,6 @@ from pyspark.sql import SparkSession
 import util
 from hypothesis_example import description
 
-spark = (SparkSession
-            .builder
-            .master('local[2]')
-            .appName('pytest-pyspark-local-testing')
-            .enableHiveSupport()
-            .getOrCreate())
-# request.addfinalizer(lambda: spark.stop())
-
-# quiet_py4j()
-spark.sparkContext.addPyFile("/Users/gizmo/dev/oreilly_dataeng_book/ch7_testing/util.py")
-sc = spark.sparkContext
-
-
 
 # run pytest with -s to see the test cases printed during execution
 
@@ -38,26 +25,20 @@ sc = spark.sparkContext
 def test_transform_hypothesis(spark_context, description, emails):
     species = description[0]
     desc = description[1]
-
-    test_df = util.df_from_list_dict([{'description': desc, 'user': emails}], spark_context)
-    expected_df = util.df_from_list_dict([{'species': species, 'user': emails}], spark_context)
+    test_df = spark_context.parallelize([{'description': desc, 'user': emails}]).toDF()
+    expected_df = spark_context.parallelize([{'species': species, 'user': emails}]).toDF()
     df_with_species = transform.apply_species_label(util.species_list, test_df)
     print("description:", desc, "species:", species)
  
     assert df_with_species.select('species','user').subtract(expected_df).rdd.isEmpty()
 
 
-def test_transform_manual():
-    spark_context = sc
+def test_transform_manual(spark_context):
     data, expected = manual_example.create_mock_data()
 
-    test_df = util.df_from_list_dict(data, spark_context)
+    test_df = spark_context.parallelize(data).toDF()
+    expected_df = spark_context.parallelize(expected).toDF()
     df_with_species = transform.apply_species_label(util.species_list, test_df)
-    expected_df = util.df_from_list_dict(expected, spark_context)
-
-    # this runs in 13s, vs 17s for df subtract
-    # with_species = map(lambda row: row.asDict(), df_with_species.collect())
-    # assert expected == with_species
 
     diff = df_with_species.select('species','user').subtract(expected_df)
     diff.show()
@@ -71,8 +52,8 @@ def fake_ids(value):
 def test_transform_faker(spark_context):
     data, expected = faker_example.create_mock_data(10)
 
-    test_df = util.df_from_list_dict(data, spark_context)
-    expected_df = util.df_from_list_dict(expected, spark_context)
+    test_df = spark_context.parallelize(data).toDF()
+    expected_df = spark_context.parallelize(expected).toDF()
     df_with_species = transform.apply_species_label(util.species_list, test_df)
 
     assert df_with_species.select('species','user').subtract(expected_df).rdd.isEmpty()

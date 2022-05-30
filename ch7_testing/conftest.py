@@ -1,7 +1,12 @@
 ## fake data generators as python fixtures for using in tests
 import logging
+import os
+from pickletools import pyset
 from unittest import mock
 from unittest.mock import Mock
+
+import boto3
+from moto import mock_s3
 import pytest
 from pyspark.sql import SparkSession
 
@@ -40,19 +45,21 @@ def spark_context(request):
 #         metafunc.parametrize("faker_data, expected", zip(data,expected))
 
 
-@pytest.fixture
-@mock.patch('cloud_examples.storage', autospec=True)
-def storage_mock(storage):
-    blob = Mock()
-    blob.delete = Mock()
-    mock_bucket = Mock()
-    mock_bucket.list_blobs = Mock()
-    mock_bucket.list_blobs.return_value = [blob, blob]
-    client = Mock()
-    client.get_bucket = Mock()
-    client.get_bucket.return_value = mock_bucket
-    storage.Client.return_value = client
-    yield storage
+# Suggested setup for moto
+# https://docs.getmoto.org/en/latest/docs/getting_started.html#example-on-usage
+
+@pytest.fixture(scope="function")
+def aws_credentials():
+    os.environ['AWS_ACCESS_KEY_ID'] = 'testing'
+    os.environ['AWS_SECRET_ACCESS_KEY'] = 'testing'
+    os.environ['AWS_SECURITY_TOKEN'] = 'testing'
+    os.environ['AWS_SESSION_TOKEN'] = 'testing'
+    os.environ['AWS_DEFAULT_REGION'] = 'us-east-1'
+
+@pytest.fixture(scope="function")
+def s3(aws_credentials):
+    with mock_s3():
+        yield boto3.client('s3', region_name='us-east-1')
 
 @pytest.fixture
 def client_mock():
@@ -62,6 +69,7 @@ def client_mock():
     mock_bucket.list_blobs = Mock()
     mock_bucket.list_blobs.return_value = [blob, blob]
     client = Mock()
+    client.nothere = Mock()
     client.get_bucket = Mock()
     client.get_bucket.return_value = mock_bucket
     return client

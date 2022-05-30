@@ -14,7 +14,7 @@ def create_mock_data():
             "user": "anotherthing@email.com",
             "location": "45.12431, 121.12453",
             "img_files": [],
-            "description": None,
+            "description": "",
             "count": 10,
         },
         {
