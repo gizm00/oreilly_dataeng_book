@@ -32,7 +32,7 @@ def test_get_zip_ok(mock_requests):
     mock_requests.get.return_value.status_code = 200
     mock_requests.get.return_value.json.return_value = {"zipcode": "97201"}
     
-    assert get_zip((45.5152, 122.6784))
+    assert get_zip((45.5152, 122.6784)) == {"zipcode": "97201"}
 
 @mock.patch('geocoding.requests', autospec=True)
 def test_get_zip_retry_mock(mock_requests):
@@ -58,9 +58,8 @@ def test_get_zip_retry():
     assert zip["zipcode"] == "97201"
     assert get_zip.retry.statistics.get('attempt_number') == 3
 
-
-# mocked_responses is a pytest fixture provided by responses
-def test_get_zip_retries_exhausted(mocked_responses):
+@responses.activate()
+def test_get_zip_retries_exhausted():
     get_zip.retry.sleep = mock.Mock()
     for _ in range(6):
         responses.get(geocoding.GEOCODING_API, status=429, json={})

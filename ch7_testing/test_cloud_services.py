@@ -34,8 +34,3 @@ def test_delete_temp_aws(s3):
     obj_response = s3.list_objects_v2(Bucket="fake_bucket", Prefix="fake_prefix")
     assert obj_response['KeyCount'] == 0
 
-
-@mock.patch('cloud_examples.boto3', autospec=True)
-def test_delete_temp_aws_mock(boto_mock):
-    list_obj_response = {'Content': [{'Key': 'someobject'}]}
-    boto_mock.client.return_value.list_objects_v2.return_value = list_obj_response

@@ -17,3 +17,28 @@ def delete_temp_aws(bucket_name, prefix):
     object_keys = [{'Key':item['Key']} for item in objects['Contents']]
     s3.delete_objects(Bucket=bucket_name, Delete={'Objects':object_keys})
     
+import env
+import io
+import pandas as pd
+
+def hod_has_night_heron_data():
+    s3 = boto3.client('s3', region_name='us-east-1')
+    objects = s3.list_objects_v2(Bucket=env.ENRICHED_DATA_BUCKET)
+    for obj in objects['Contents']:
+        content = s3.get_object(Bucket=env.ENRICHED_DATA_BUCKET, Key=obj['Key'])
+        df = pd.read_json(io.BytesIO(content['Body'].read()))
+        if len(df.query("species == 'night heron'")) > 0:
+            return True
+    return False
+
+# def hod_has_night_heron_data():
+#     s3 = boto3.resource('s3')
+#     bucket = s3.Bucket(env.ENRICHED_DATA_BUCKET)
+#     for obj in bucket.objects.filter("*.json"):
+#         print("got object", obj.name)
+#         # content = s3.get_object(Bucket=env.ENRICHED_DATA_BUCKET, Key=obj['Key'])
+#         df = pd.read_json(io.BytesIO(content['Body'].read()))
+#         print("df:", df)
+#         if len(df.query("species == 'night heron'")) > 0:
+#             return True
+#     return False
