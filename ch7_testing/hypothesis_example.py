@@ -13,7 +13,6 @@ def test_names(names):
 words=st.lists(st.text(min_size=0), min_size=3, max_size=5)
 species_st=st.sampled_from(util.species_list + [''])
 
-
 @st.composite
 def description(draw):
     start = draw(words) 
