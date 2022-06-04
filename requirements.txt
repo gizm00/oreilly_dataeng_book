@@ -7,7 +7,7 @@ pytest==7.1.2
 requests==2.27.1
 tenacity==8.0.1
 responses==0.21.0
-sqlalchmeny==1.4.37
+sqlalchemy==1.4.37
 psycopg2==2.9.3
 google-cloud-storage==2.3.0 
 boto3==1.23.10
