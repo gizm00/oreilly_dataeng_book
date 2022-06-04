@@ -11,6 +11,7 @@
 6. Clone this repo  
 `git clone git@github.com:gizm00/oreilly_dataeng_book.git`
 7. `cd oreilly_dataeng_book`
+8. `pip install wheel`
 6. Install dependencies  
 `python -m pip install -r requirements.txt`
 
