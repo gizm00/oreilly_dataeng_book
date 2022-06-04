@@ -3,7 +3,7 @@ pyspark==3.2.1
 hypothesis_jsonschema==0.22.0
 hypothesis==6.46.2
 pandas==1.4.2
-pytest==3.0.8
+pytest==7.1.2
 requests==2.27.1
 tenacity==8.0.1
 responses==0.21.0
