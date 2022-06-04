@@ -1,3 +1,4 @@
+wheel
 faker==13.6.0
 pyspark==3.2.1
 hypothesis_jsonschema==0.22.0
