@@ -2,7 +2,6 @@ from hypothesis import given
 from hypothesis import strategies as st
 import string
 
-import pytest
 
 import util
 names = st.text(alphabet=string.ascii_letters)
@@ -11,7 +10,7 @@ names = st.text(alphabet=string.ascii_letters)
 def test_names(names):
     print(names)
 
-words=st.lists(st.text(alphabet=string.ascii_letters, min_size=0), min_size=3, max_size=5)
+words=st.lists(st.text(min_size=0), min_size=3, max_size=5)
 species_st=st.sampled_from(util.species_list + [''])
 
 
@@ -22,4 +21,3 @@ def description(draw):
     end = draw(words)
     sentence = ' '.join(start + [species] + end).strip()
     return (species, sentence)
-
