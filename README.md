@@ -8,8 +8,11 @@
 `pyenv virtualenv 3.8.5 oreilly-book`  
 5. Activate the virtual environment  
 `pyenv activate oreilly-book`
+6. Clone this repo  
+`git clone git@github.com:gizm00/oreilly_dataeng_book.git`
+7. `cd oreilly_dataeng_book`
 6. Install dependencies  
-`python -m pip install requirements.txt`
+`python -m pip install -r requirements.txt`
 
 ### Running spark locally
 (based on [these instructions](https://medium.com/tinghaochen/how-to-install-pyspark-locally-94501eefe421))  

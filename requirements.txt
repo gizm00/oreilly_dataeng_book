@@ -1,6 +1,6 @@
 faker==13.6.0
 pyspark==3.2.1
-hypothesis_jsonschema==4.5.1
+hypothesis_jsonschema==0.22.0
 hypothesis==6.46.2
 pandas==1.4.2
 pytest==3.0.8
