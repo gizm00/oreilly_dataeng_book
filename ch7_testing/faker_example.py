@@ -77,3 +77,8 @@ def create_mock_data(length=1):
         )
     return (mock_data, expected)
 
+if __name__ == '__main__':
+    import json
+    test_data = create_mock_data(40)
+    with open('test_data.json', 'w+') as f:
+        json.dump(test_data, f)
