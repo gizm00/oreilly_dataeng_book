@@ -1,0 +1,31 @@
+# Sample, not intended to run
+services:
+
+  postgres:
+    image: postgres
+    environment:
+      POSTGRES_USER: ${PG_USER}
+      POSTGRES_PASSWORD: ${PG_PASS}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - migration     
+
+  api:
+    environment:
+      POSTGRES_USER: ${PG_USER}
+      POSTGRES_PASSWORD: ${PG_PASS}
+      POSTGRES_PORT: ${PG_PORT}
+      POSTGRES_HOST: ${PG_HOST}
+    networks:
+     - migration
+    depends_on:
+     - postgres
+
+volumes:
+  pg_data:
+    name: postgres
+
+networks:
+  migration:
+

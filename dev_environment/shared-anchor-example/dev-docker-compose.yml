@@ -1,26 +1,25 @@
 # Sample, not intended to run
+x-environ: &def-common
+  environment:
+    &common-env
+    POSTGRES_USER: ${PG_USER}
+    POSTGRES_PASSWORD: ${PG_PASS}
+
 services:
   postgres:
     image: postgres
-    container_name: postgres
     environment:
-      POSTGRES_USER: ${PG_USER}
-      POSTGRES_PASSWORD: ${PG_PASS}
+      <<: *common-env
     volumes:
       - pg_data:/var/lib/postgresql/data
     networks:
       - migration     
 
   api:
-    image: container/repo/api_image:latest
-    container_name: api
     environment:
-      POSTGRES_USER: ${PG_USER}
-      POSTGRES_PASSWORD: ${PG_PASS}
+      <<: *common-env
       POSTGRES_PORT: ${PG_PORT}
       POSTGRES_HOST: ${PG_HOST}
-    volumes:
-     - ./code_root/api:/container_code/path
     networks:
      - migration
     depends_on:
@@ -31,4 +30,5 @@ volumes:
     name: postgres
 
 networks:
- migration:
+  migration:
+

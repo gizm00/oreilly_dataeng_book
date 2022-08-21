@@ -1,0 +1,6 @@
+services:   
+  api:
+    image: container/repo/api_image:latest
+    container_name: api
+    volumes:
+     - ./code_root/api:/container_code/path

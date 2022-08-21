@@ -1,0 +1,36 @@
+# Sample, not intended to run
+services:
+  kafka:
+    image: confluentinc/cp-kafka:7.2.1
+    hostname: kafka
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    depends_on:
+     - zookeeper # omitted, see https://github.com/conduktor/kafka-stack-docker-compose for examples
+    networks:
+    - migration
+
+  transform:
+    image: container/repo/transform_image:latest
+    container_name: transform
+    environment:
+      KAFKA_TOPIC_READ: migration_data
+      KAFKA_TOPIC_WRITE: transformed_data
+      POSTGRES_USER: ${PG_USER}
+      POSTGRES_PASSWORD: ${PG_PASS}
+      POSTGRES_PORT: ${PG_PORT}
+      POSTGRES_HOST: ${PG_HOST}
+    volumes:
+     - ./code_root/transform:/container_code/path
+    networks:
+     - migration
+    depends_on:
+    - kafka
+    - api
+
+  api:
+    image: container/repo/api_image:latest
+    container_name: api
+
+
