@@ -29,12 +29,12 @@ def spark_context(request):
              .builder
              .master('local[2]')
              .appName('pytest-pyspark-local-testing')
-             .enableHiveSupport()
+            #  .enableHiveSupport()
              .getOrCreate())
     request.addfinalizer(lambda: spark.stop())
 
     quiet_py4j()
-    spark.sparkContext.addPyFile("/Users/gizmo/dev/oreilly_dataeng_book/ch7_testing/util.py")
+    spark.sparkContext.addPyFile("./util.py")
     return spark.sparkContext
 
 # try and work this in using mock API responses, where i want to filter

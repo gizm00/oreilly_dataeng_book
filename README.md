@@ -1,3 +1,9 @@
+# Cost Effective Data Pipelines example code repository
+
+This repo contains code examples for the upcoming book Cost Effective Data Pipelines  
+
+Please send any comments, concerns, or problems to sev@thedatascout.com
+
 ## Environment setup
 
 1. Install [pyenv](https://github.com/pyenv/pyenv)
@@ -15,7 +21,7 @@
 6. Install dependencies  
 `python -m pip install -r requirements.txt`
 
-### Running spark locally
+## Running Spark locally
 (based on [these instructions](https://medium.com/tinghaochen/how-to-install-pyspark-locally-94501eefe421))  
 Within the virtualenv created above run the following: 
 1. Download [apache-spark](https://spark.apache.org/downloads.html) This material was developed using spark 3.2.1 with hadoop 3.2
