@@ -2,10 +2,13 @@ import pandas as pd
 from sqlalchemy import create_engine
 
 from util import species_list
+
 # If you arent familiar with the sqlalchemy ORM this is a really nice article:
 # https://towardsdatascience.com/sqlalchemy-python-tutorial-79a577141a91
+# The example methods below are making direct sql queries for the sake of
+# illustration. In a production environment you would want to consider using an ORM 
 
-engine = create_engine('postgresql://user:password@localhost/hod_db')
+engine = create_engine('postgresql://user:password@localhost:5432/hod_db')
 
 class UnknownSpeciesError(BaseException):
     pass

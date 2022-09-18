@@ -2,7 +2,7 @@
 services:
   postgres:
     image: postgres
-    container_name: postgres
+    container_name: postgres-api
     environment:
       POSTGRES_USER: ${PG_USER}
       POSTGRES_PASSWORD: ${PG_PASS}
@@ -10,6 +10,8 @@ services:
       - pg_data:/var/lib/postgresql/data
     networks:
       - migration     
+    ports:
+      - 5432:15432
 
   api:
     image: container/repo/api_image:latest

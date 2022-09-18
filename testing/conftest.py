@@ -1,4 +1,5 @@
 ## fake data generators as python fixtures for using in tests
+from enum import auto
 import logging
 import os
 from pickletools import pyset
@@ -9,6 +10,7 @@ import boto3
 from moto import mock_s3
 import pytest
 from pyspark.sql import SparkSession
+from sqlalchemy import create_engine
 
 import faker_example
 
@@ -20,6 +22,62 @@ def quiet_py4j():
     logger = logging.getLogger('py4j')
     logger.setLevel(logging.WARN)
 
+# For illustration only - do not store passwords in code files, in production
+# these values should come from a credentials store
+TEST_DB_INFO = {
+    "host": "localhost",
+    "port": "5432",
+    "user": "postgres",
+    "pass": "postgres",
+    "db_name": "postgres"
+}
+
+def setup_test_db():
+    # some typical connection strings, assuming postgres runs in a container:
+    # code running locally: postgresql://user:pass@localhost:5432/db_name
+    # code running in a container: "postgresql://user:pass@host.docker.internal:5432/db_name"
+    creds = f"{TEST_DB_INFO['user']}:{TEST_DB_INFO['pass']}"
+    host = f"{TEST_DB_INFO['host']}:{TEST_DB_INFO['port']}"
+    engine = create_engine(f"postgresql://{creds}@{host}", isolation_level='AUTOCOMMIT')
+    with engine.connect() as conn:
+        conn.execute("DROP DATABASE IF EXISTS test_db")
+        conn.execute("CREATE DATABASE test_db")
+        conn.close()
+        return engine
+
+def teardown_test_db(engine):
+    with engine.connect() as conn:
+        conn.execute("DROP DATABASE test_db")
+    engine.dispose()
+
+@pytest.fixture(scope="session")
+def test_db():
+    creds = f"{TEST_DB_INFO['user']}:{TEST_DB_INFO['pass']}"
+    host = f"{TEST_DB_INFO['host']}:{TEST_DB_INFO['port']}"
+    engine = setup_test_db()
+    test_engine = create_engine(f"postgresql://{creds}@{host}/test_db")
+    test_conn = test_engine.connect()
+    yield test_conn
+    test_conn.close()
+    test_engine.dispose()
+    teardown_test_db(engine)
+
+
+
+@pytest.fixture(scope="session")
+def treatment_conn(test_db):
+    test_db.execute("""
+        CREATE TABLE treatment (
+            id int,
+            name text
+        )
+    """)
+    test_db.execute("""
+        INSERT INTO treatment VALUES(1, 'Drug A');
+        INSERT INTO treatment VALUES(2, 'Drug C');
+    """)
+    yield test_db
+
 
 @pytest.fixture(scope="session")
 def spark_context(request):
@@ -29,7 +87,7 @@ def spark_context(request):
              .builder
              .master('local[2]')
              .appName('pytest-pyspark-local-testing')
-            #  .enableHiveSupport()
+             .enableHiveSupport()
              .getOrCreate())
     request.addfinalizer(lambda: spark.stop())
 

@@ -49,32 +49,10 @@ def test_transform_manual(spark_context):
         result_case = [r for r in with_species if r['user'] == user]
         if len(result_case) == 0:
             pytest.fail(f"Expected case: {case}. Could not find user {user} in result {with_species}")
-        print("Result: %s", with_species)
-        print("Expected: %s", expected)
+        print(f"Result: {result_case}")
+        print(f"Expected: {case}")
         assert result_case[0]['species'] == species
 
-def test_transform_manual_spark(spark_context):
-    """
-    An alternate way to test results using spark dataframes. For 
-    complex datasets this can be less performant than a dict match
-    used in test_transform_manual. The benefit of this method is using
-    dataframe subtract for the comparison as opposed to writing your
-    own, and the ability to show the failed test cases i.e.
-    ---------- Captured stdout call ---------------
-    +-----------+----------------------+
-    |species    |user                  |
-    +-----------+----------------------+
-    |night heron|somethingbad@email.com|
-    +-----------+----------------------+
-    """
-    data, expected = manual_example.create_mock_data()
-
-    test_df = spark_context.parallelize(data).toDF()
-    expected_df = spark_context.parallelize(expected).toDF()
-    df_with_species = transform.apply_species_label(util.species_list, test_df)
-    diff = df_with_species.select('species','user').subtract(expected_df)
-    diff.show(10, False)
-    assert diff.rdd.isEmpty()
 
 def fake_ids(value):
     if 'species' in str(value):
@@ -82,13 +60,22 @@ def fake_ids(value):
 
 
 def test_transform_faker(spark_context):
-    data, expected = faker_example.create_mock_data(10)
+    data, expected = faker_example.create_mock_data(100000)
 
     test_df = spark_context.parallelize(data).toDF()
-    expected_df = spark_context.parallelize(expected).toDF()
+    # expected_df = spark_context.parallelize(expected).toDF()
     df_with_species = transform.apply_species_label(util.species_list, test_df)
+    with_species = df_with_species.toPandas().to_dict('records')
 
-    assert df_with_species.select('species','user').subtract(expected_df).rdd.isEmpty()
+    for case in expected:
+        user = case['user']
+        species = case['species']
+        result_case = [r for r in with_species if r['user'] == user]
+        if len(result_case) == 0:
+            pytest.fail(f"Expected case: {case}. Could not find user {user} in result {with_species}")
+        print(f"Result: {result_case}")
+        print(f"Expected: {case}")
+        assert result_case[0]['species'] == species
 
 
 from schemas import survey_data
