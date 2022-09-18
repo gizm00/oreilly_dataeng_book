@@ -1,9 +1,6 @@
 ## fake data generators as python fixtures for using in tests
-from enum import auto
 import logging
 import os
-from pickletools import pyset
-from unittest import mock
 from unittest.mock import Mock
 
 import boto3
@@ -14,6 +11,8 @@ from sqlalchemy import create_engine
 
 import faker_example
 
+
+#--------------- SPARK TEST COLLATERAL ------------------------------
 # Starting a spark app is a significant overhead, first test that uses this fixture
 # will take a while to run ~ 20s
 # pyspark unit testing reference: https://blog.cambridgespark.com/unit-testing-with-pyspark-fb31671b1ad8
@@ -21,63 +20,6 @@ def quiet_py4j():
     """Suppress spark logging for the test context."""
     logger = logging.getLogger('py4j')
     logger.setLevel(logging.WARN)
-
-# For illustration only - do not store passwords in code files, in production
-# these values should come from a credentials store
-TEST_DB_INFO = {
-    "host": "localhost",
-    "port": "5432",
-    "user": "postgres",
-    "pass": "postgres",
-    "db_name": "postgres"
-}
-
-def setup_test_db():
-    # some typical connection strings, assuming postgres runs in a container:
-    # code running locally: postgresql://user:pass@localhost:5432/db_name
-    # code running in a container: "postgresql://user:pass@host.docker.internal:5432/db_name"
-    creds = f"{TEST_DB_INFO['user']}:{TEST_DB_INFO['pass']}"
-    host = f"{TEST_DB_INFO['host']}:{TEST_DB_INFO['port']}"
-    engine = create_engine(f"postgresql://{creds}@{host}", isolation_level='AUTOCOMMIT')
-    with engine.connect() as conn:
-        conn.execute("DROP DATABASE IF EXISTS test_db")
-        conn.execute("CREATE DATABASE test_db")
-        conn.close()
-        return engine
-
-def teardown_test_db(engine):
-    with engine.connect() as conn:
-        conn.execute("DROP DATABASE test_db")
-    engine.dispose()
-
-@pytest.fixture(scope="session")
-def test_db():
-    creds = f"{TEST_DB_INFO['user']}:{TEST_DB_INFO['pass']}"
-    host = f"{TEST_DB_INFO['host']}:{TEST_DB_INFO['port']}"
-    engine = setup_test_db()
-    test_engine = create_engine(f"postgresql://{creds}@{host}/test_db")
-    test_conn = test_engine.connect()
-    yield test_conn
-    test_conn.close()
-    test_engine.dispose()
-    teardown_test_db(engine)
-
-
-
-@pytest.fixture(scope="session")
-def treatment_conn(test_db):
-    test_db.execute("""
-        CREATE TABLE treatment (
-            id int,
-            name text
-        )
-    """)
-    test_db.execute("""
-        INSERT INTO treatment VALUES(1, 'Drug A');
-        INSERT INTO treatment VALUES(2, 'Drug C');
-    """)
-    yield test_db
-
 
 @pytest.fixture(scope="session")
 def spark_context(request):
@@ -103,6 +45,7 @@ def spark_context(request):
 #         metafunc.parametrize("faker_data, expected", zip(data,expected))
 
 
+#-------------------- CLOUD MOCKS ----------------------
 # Suggested setup for moto
 # https://docs.getmoto.org/en/latest/docs/getting_started.html#example-on-usage
 
@@ -131,3 +74,100 @@ def client_mock():
     client.get_bucket = Mock()
     client.get_bucket.return_value = mock_bucket
     return client
+
+
+#-------------- DATABASES ---------------
+
+# For illustration only - do not store passwords in code files!
+TEST_DB_INFO = {
+    "host": "localhost",
+    "port": "5432",
+    "user": "postgres",
+    "pass": "postgres",
+    "db_name": "postgres"
+}
+
+
+def setup_test_db():
+    creds = f"{TEST_DB_INFO['user']}:{TEST_DB_INFO['pass']}"
+    host = f"{TEST_DB_INFO['host']}:{TEST_DB_INFO['port']}"
+    engine = create_engine(f"postgresql://{creds}@{host}", isolation_level='AUTOCOMMIT')
+    with engine.connect() as conn:
+        conn.execute("DROP DATABASE IF EXISTS test_db")
+        conn.execute("CREATE DATABASE test_db")
+        conn.close()
+    return engine
+
+def teardown_test_db(engine):
+    """
+    While not strictly necessary since the test_db will be dropped if it
+    exists when the next test session starts, dropping the database at the
+    completion of the unit test session can save space in the meantime.
+    """
+    with engine.connect() as conn:
+        conn.execute("DROP DATABASE test_db")
+    engine.dispose()
+
+
+@pytest.fixture(scope="session")
+def test_db():
+    # some typical connection strings, assuming postgres runs in a container:
+    # code running locally: postgresql://user:pass@localhost:5432/db_name
+    # code running in a container: "postgresql://user:pass@host.docker.internal:5432/db_name"
+    engine = setup_test_db()
+    yield engine
+    teardown_test_db(engine)
+
+def create_tables(conn):
+    """
+    Create treatement and delivery mechanism tables
+    """
+    conn.execute("""
+        CREATE TABLE treatment (
+            id int,
+            name text
+        );
+        INSERT INTO treatment VALUES(1, 'Drug A');
+        INSERT INTO treatment VALUES(2, 'Drug C');
+        CREATE TABLE delivery_mechanism (
+            id int,
+            name text
+        );
+        INSERT INTO treatment VALUES(1, 'tablet');
+        INSERT INTO treatment VALUES(2, 'IV');
+    """)
+
+@pytest.fixture(scope="session")
+def test_conn(test_db):
+    creds = f"{TEST_DB_INFO['user']}:{TEST_DB_INFO['pass']}"
+    host = f"{TEST_DB_INFO['host']}:{TEST_DB_INFO['port']}"
+    test_engine = create_engine(f"postgresql://{creds}@{host}/test_db")
+    test_conn = test_engine.connect()
+    create_tables(test_conn)
+    yield test_conn
+    test_conn.close()
+    test_engine.dispose()
+
+@pytest.fixture(scope="function")
+def match_table(test_conn):
+    test_conn.execute("""
+        CREATE TABLE match (
+            treatment_id int,
+            delivery_id int,
+            patient_id int,
+            ok bool
+        )
+    """)
+    yield 
+    test_conn.execute("DROP TABLE match")
+
+@pytest.fixture(scope="function")
+def patient_table(test_conn):
+    test_conn.execute("""
+        CREATE TABLE patient_data (
+            id int,
+            treatment_info text
+        )
+    """)
+    yield 
+    test_conn.execute("DROP TABLE patient_data")
