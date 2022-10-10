@@ -20,9 +20,20 @@ def basic_fake_data():
         print(k, ":", v)
 
 
-
 from faker.providers import BaseProvider
+
 class DescriptionProvider(BaseProvider):
+    def min_desc(self):
+        species = fake.words(ext_word_list=util.species_list, nb=1)[0]
+        species_part = species.split(" ")[choice([0,-1])] # choose 2
+        species_use = choice([species, species_part, ""]) # choose 3
+        word_list = fake.words(nb=choice([0,10])) # choose 2
+        index = choice([0, len(word_list)-1, int((len(word_list)-1)/2)]) # choose 3
+        if len(word_list) > 0:
+            return ' '.join(word_list[0:index] + [species_use] + word_list[index+1:])
+        else:
+            return species_use
+
     def description(self):
         species = fake.words(ext_word_list=util.species_list, nb=1)[0]
         species_part = species.split(" ")[choice([0,-1])]

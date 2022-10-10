@@ -1,12 +1,12 @@
 from google.cloud import storage
 
 def delete_temp(bucket_name, prefix):
-    storage_client = storage.Client()
-    bucket = storage_client.get_bucket(bucket_name)
+    storage_client = storage.Client() # @mock.patch('cloud_examples.storage', autospec=True)
+    bucket = storage_client.get_bucket(bucket_name) # storage.Client.return_value.get_bucket.return_value
 
-    blobs = bucket.list_blobs(prefix)
-    for blob in blobs:
-        blob.delete()
+    blobs = bucket.list_blobs(prefix) # mock_bucket.list_blobs.return_value 
+    for blob in blobs: # [blob, blob]
+        blob.delete() # blob = mock.Mock(Blob); blob.delete.return_value = None
 
 
 import boto3

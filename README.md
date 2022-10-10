@@ -1,6 +1,6 @@
 # Cost Effective Data Pipelines example code repository
 
-This repo contains code examples for the upcoming book Cost Effective Data Pipelines  
+This repo contains code examples for the upcoming book [Cost Effective Data Pipelines](https://learning.oreilly.com/library/view/cost-effective-data-pipelines/9781492098638/)
 
 Please send any comments, concerns, or problems to sev@thedatascout.com
 

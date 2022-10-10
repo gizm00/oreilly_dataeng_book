@@ -7,6 +7,11 @@ import geocoding
 import pytest
 from geocoding import get_zip, lat_long_to_pop, GeocodingError, GeocodingRetryException
 
+@mock.patch('geocoding.get_zip', mock.Mock(return_value='97201'))
+@mock.patch('geocoding.get_population', mock.Mock(return_value='1000'))
+def test_lat_long_to_pop():
+    assert lat_long_to_pop((45.5152, 122.6784)) == {'97201':'1000'}
+
 class MockResponse:
    def __init__(self, json_data, status_code):
        self.json_data = json_data
@@ -31,8 +36,12 @@ def test_get_zip_404(mock_requests):
 def test_get_zip_ok(mock_requests):
     mock_requests.get.return_value.status_code = 200
     mock_requests.get.return_value.json.return_value = {"zipcode": "97201"}
-    
     assert get_zip((45.5152, 122.6784)) == {"zipcode": "97201"}
+    mock_requests.get.assert_called_once_with(
+                url=geocoding.GEOCODING_API, 
+                params={"lat_long": (45.5152, 122.6784)}
+            )
+
 
 @mock.patch('geocoding.requests', autospec=True)
 def test_get_zip_retry_mock(mock_requests):
@@ -44,6 +53,30 @@ def test_get_zip_retry_mock(mock_requests):
     zip = get_zip((45.5152, 122.6784))
     assert zip["zipcode"] == "97201"
     assert get_zip.retry.statistics.get('attempt_number') == 3
+
+def test_get_poplation():
+    zip_resp = MockResponse({"zipcode": "97201"}, 200)
+    pop_resp = MockResponse({"population": "17558"}, 200)
+    with mock.patch('requests.get', side_effect=[zip_resp, pop_resp]):
+        population = lat_long_to_pop((45.5152, 122.6784))
+
+    assert population["population"] == "17558"
+
+
+#########
+# Examples using responses
+#########
+@responses.activate()
+def test_get_zip_ok_resp():
+    zip_resp = responses.get(
+        # geocoding.GEOCODING_API, 
+        "www.python.org",
+        status=200, 
+        json={"zipcode": "97201"})
+    assert get_zip((45.5152, 122.6784)) == {"zipcode": "97201"}
+    assert zip_resp.call_count == 1
+
+
 
 
 # Ordered registry ensures responses are called in order, which we want
@@ -68,11 +101,4 @@ def test_get_zip_retries_exhausted():
         get_zip((45.5152, 122.6784)) 
     assert get_zip.retry.statistics.get('attempt_number') == 5
 
-def test_get_poplation():
-    zip_resp = MockResponse({"zipcode": "97201"}, 200)
-    pop_resp = MockResponse({"population": "17558"}, 200)
-    with mock.patch('requests.get', side_effect=[zip_resp, pop_resp]):
-        population = lat_long_to_pop((45.5152, 122.6784))
-
-    assert population["population"] == "17558"
 

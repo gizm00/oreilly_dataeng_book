@@ -68,3 +68,6 @@ def test_get_hod_matches_less_coverage(mock_species, mock_zip):
     df = get_hod_matches('night heron', '97341')
     assert len(df.id) == 1
 
+# Another possible solution is creating a test database. This isnt
+# an approach I would consider initially given the methods under
+# test are only running a SELECT statement. 

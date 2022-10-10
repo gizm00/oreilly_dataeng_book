@@ -3,12 +3,13 @@
 from unittest import mock
 
 import cloud_examples
-
+from google.cloud.storage import Blob
 
 @mock.patch('cloud_examples.storage', autospec=True)
 def test_delete_temp(storage):
-    blob = mock.Mock()
-    blob.delete = mock.Mock()
+    blob = mock.Mock(Blob)
+    blob.delete.return_value = None
+    # blob.nope.return_value = None # uncomment to see AttributeError for violating Blob spec
     mock_bucket = storage.Client.return_value.get_bucket.return_value
     mock_bucket.list_blobs.return_value = [blob, blob]
 
@@ -23,11 +24,11 @@ def test_delete_temp(storage):
 
 from cloud_examples import delete_temp_aws
 def test_delete_temp_aws(s3):
-    s3.create_bucket(Bucket="fake_bucket")
-    s3.put_object(Bucket="fake_bucket", Key="fake_prefix/something", Body=b'Some info')
+    # s3.create_bucket(Bucket="fake_bucket")
+    # s3.put_object(Bucket="fake_bucket", Key="fake_prefix/something", Body=b'Some info')
 
-    obj_response = s3.list_objects_v2(Bucket="fake_bucket", Prefix="fake_prefix")
-    assert len(obj_response['Contents']) == 1
+    # obj_response = s3.list_objects_v2(Bucket="fake_bucket", Prefix="fake_prefix")
+    # assert len(obj_response['Contents']) == 1
 
     delete_temp_aws("fake_bucket", "fake_prefix")
 

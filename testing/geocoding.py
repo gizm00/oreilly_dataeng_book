@@ -40,4 +40,5 @@ def lat_long_to_pop(lat_long):
     except GeocodingRetryException:
         logging.exception("Attempt to get zipcode timedout:", zipcode.retry.statistics)
         return
-    return get_population(zipcode)
+    pop = get_population(zipcode)
+    return {zipcode: pop}
