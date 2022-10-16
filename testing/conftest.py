@@ -40,7 +40,7 @@ def spark_context(request):
 # try and work this in using mock API responses, where i want to filter
 # on response code in the test at runtime
 # def pytest_generate_tests(metafunc):
-#     data, expected = faker_example.create_mock_data(34)
+#     data, expected = faker_example.create_test_data(34)
 #     if "faker_data" in metafunc.fixturenames:
 #         metafunc.parametrize("faker_data, expected", zip(data,expected))
 

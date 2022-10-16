@@ -9,13 +9,17 @@ spark = (SparkSession
          .appName('oreilly-book')
          .getOrCreate())
 
+class DataGenerationError(BaseException):
+    pass
+
 # solution cribbed from https://stackoverflow.com/a/53817839
 
 DYNAMIC_NAMED_FIELDS = {
     ("count", LongType()): lambda: fake.random.randint(0, 20),
-    ("description", StringType()): lambda: fake.description(),
+    ("description", StringType()): lambda: fake.description_distribution(),
     ("user",StringType()): lambda: fake.email(),
 }
+
 
 DYNAMIC_GENERAL_FIELDS = {
     StringType(): lambda: fake.word(),
@@ -28,30 +32,59 @@ def update_expected(name, value, expected):
     if name == 'description':
         expected['species'] = value[1]
         return value[0]
-    else:
+    if name == 'user':
         expected['user'] = value
         return value
+    raise DataGenerationError(f"Could not update expected value for name {name}")
 
-def get_value(name, dataType, expected):
-    if (name, dataType) in DYNAMIC_NAMED_FIELDS:
-        value = DYNAMIC_NAMED_FIELDS.get((name, dataType))()
-        if name in ['user', 'description']:
-            return update_expected(name, value, expected)
-
+def get_value(name, datatype):
+    if name in [t[0] for t in DYNAMIC_NAMED_FIELDS]:
+        value = DYNAMIC_NAMED_FIELDS[(name, datatype)]()
         return value
-    if dataType in DYNAMIC_GENERAL_FIELDS:
-        return DYNAMIC_GENERAL_FIELDS.get(dataType)()
+
+    if datatype in DYNAMIC_GENERAL_FIELDS:
+        return DYNAMIC_GENERAL_FIELDS.get(datatype)()
+        
+    raise DataGenerationError(f"No match for {name}, {datatype}") 
 
 def generate_data(schema, length=1):
+    gen_samples = []
+    for _ in range(length):
+        gen_samples.append(tuple(map(lambda field: get_value(field.name, field.dataType), schema.fields)))
+
+    return spark.createDataFrame(gen_samples, schema)
+
+### Updated to provide expected results
+
+DYNAMIC_NAMED_FIELDS_EXPECTED = {
+    ("count", LongType()): lambda: fake.random.randint(0, 20),
+    ("description", StringType()): lambda: fake.description_distribution_expected(),
+    ("user",StringType()): lambda: fake.email(),
+}
+
+def get_value_update(name, datatype, expected):
+    if name in [t[0] for t in DYNAMIC_NAMED_FIELDS]:
+        value = DYNAMIC_NAMED_FIELDS[(name, datatype)]()
+
+        if name in ['user', 'description']:
+            return update_expected(name, value, expected)
+        return value
+
+    if datatype in DYNAMIC_GENERAL_FIELDS:
+        return DYNAMIC_GENERAL_FIELDS.get(datatype)()
+
+    raise DataGenerationError(f"No match for {name}, {datatype}")
+
+def generate_data_expected(schema, length=1):
     gen_samples = []
     expected_values = []
     for _ in range(length):
         expected = {}
-        gen_samples.append(tuple(map(lambda field: get_value(field.name, field.dataType, expected), schema.fields)))
+        gen_samples.append(tuple(map(lambda field: get_value_update(field.name, field.dataType, expected), schema.fields)))
         expected_values.append(expected)
 
     mock_data = spark.createDataFrame(gen_samples, schema)
-    expected = spark.sparkContext.parallelize(expected_values).toDF()
+    expected = expected_values
     return mock_data, expected
 
 def create_schema_and_mock_spark(filename, length=1):

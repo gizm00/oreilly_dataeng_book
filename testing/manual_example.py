@@ -1,7 +1,7 @@
 
 import util
 
-def create_mock_data():
+def create_test_data():
     mock_data = [
         {
             "user": "something@email.com",
