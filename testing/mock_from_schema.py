@@ -63,8 +63,8 @@ DYNAMIC_NAMED_FIELDS_EXPECTED = {
 }
 
 def get_value_update(name, datatype, expected):
-    if name in [t[0] for t in DYNAMIC_NAMED_FIELDS]:
-        value = DYNAMIC_NAMED_FIELDS[(name, datatype)]()
+    if name in [t[0] for t in DYNAMIC_NAMED_FIELDS_EXPECTED]:
+        value = DYNAMIC_NAMED_FIELDS_EXPECTED[(name, datatype)]()
 
         if name in ['user', 'description']:
             return update_expected(name, value, expected)
