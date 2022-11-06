@@ -1,5 +1,5 @@
 # cd testing/
-# pytest -v test_database_mocking.py -s
+# pytest -v test_medical_etl.py -s
 
 def test_create_engine_fixture(test_conn):
     # Example to show population of lookup tables when test_conn fixture is used

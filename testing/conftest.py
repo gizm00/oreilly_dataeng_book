@@ -78,6 +78,14 @@ def client_mock():
 
 #-------------- DATABASES ---------------
 
+def pytest_addoption(parser):
+    # store_true sets default to False
+    # https://docs.python.org/3/library/argparse.html#action
+    parser.addoption(
+        "--persist-db", action="store_true",
+        help="Do not teardown the test db at the end of the session",
+    )
+
 # For illustration only - do not store passwords in code files!
 TEST_DB_INFO = {
     "host": "localhost",
@@ -103,6 +111,12 @@ def teardown_test_db(engine):
     While not strictly necessary since the test_db will be dropped if it
     exists when the next test session starts, dropping the database at the
     completion of the unit test session can save space in the meantime.
+
+    You might also choose to forgo deleting the database at the end of the
+    test session if you'd like to leave the database for debug. Keep in mind
+    that if you call this method from the test_db fixture the DROP DATABASE
+    command will excute at the end of your test session,
+    removing the state from the tests.
     """
     with engine.connect() as conn:
         conn.execute("DROP DATABASE test_db")
@@ -110,12 +124,14 @@ def teardown_test_db(engine):
 
 
 @pytest.fixture(scope="session")
-def test_db():
+def test_db(request):
     # some typical connection strings, assuming postgres runs in a container:
     # code running locally: postgresql://user:pass@localhost:5432/db_name
     # code running in a container: "postgresql://user:pass@host.docker.internal:5432/db_name"
     engine = setup_test_db()
     yield engine
+    if request.config.getoption("--persist-db"):
+        return
     teardown_test_db(engine)
 
 def create_tables(conn):
