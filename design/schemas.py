@@ -10,6 +10,14 @@ spark_schema = StructType(
     StructField("location", ArrayType(StringType(),True),True)]
 )
 
+inferred_schema = StructType(
+    [StructField("count", LongType(),True), 
+    StructField("description", StringType(),True),
+    StructField("user", StringType(),False),
+    StructField("img_files", ArrayType(StringType(),True),True),
+    StructField("location", StringType(),True)]
+)
+
 initial_json_schema = {
   "$schema": "http://json-schema.org/draft-04/schema#",
     "type": "array",
@@ -72,4 +80,4 @@ updated_schema = {
         "location"
         ]
     }]
-}
+}   
