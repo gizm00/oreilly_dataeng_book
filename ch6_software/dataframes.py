@@ -68,3 +68,12 @@ df = (get_json('ch6_software/test_data.json')
         .transform(create_aggregate_data)
         .transform(store_json('ch6_software/result_chain.json'))
 )
+
+
+def test_species_label(spark_context):
+    data = [{'description': "Saw a night heron"}]
+    data_df = spark_context.parallelize(data).toDF()
+    species_list = ['night heron']
+    result_df = apply_species_label(species_list, data_df)
+    result = result_df.toPandas().to_dict('list')
+    assert result['species'][0] == 'night heron'

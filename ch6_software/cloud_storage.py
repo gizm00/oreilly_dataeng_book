@@ -7,7 +7,7 @@ import boto3
 import sqlalchemy as sa
 from google.cloud import storage
 
-# from ch6_software.something import ProcessBirdData
+from ch6_software.cloud_storage import ProcessBirdData
 
 class ObjectStorage(abc.ABC):
    def add(data, id):
