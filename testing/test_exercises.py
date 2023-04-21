@@ -40,10 +40,6 @@ def s3_wo_species(s3_with_bucket):
 
     yield s3_with_bucket
 
-# @pytest.mark.parametrize("s3_mock, expected", [
-#     (s3_w_species, True),
-#     (s3_wo_species, False)
-# ])
 def test_hod_has_night_heron_data(s3_w_species):
     objects = s3_w_species.list_objects_v2(Bucket=env.ENRICHED_DATA_BUCKET)
     assert objects

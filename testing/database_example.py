@@ -19,11 +19,11 @@ def check_species(species):
 def get_species_matches(species):
     if not check_species(species):
         raise UnknownSpeciesError
-    query = f"select id, content from hod_user where species = '{species}'"
+    query = f"select id, content, species from hod_user where species = '{species}'"
     return pd.read_sql_query(query, con=engine)
 
 def get_zipcode_matches(zipcode):
-    query = f"select id, content from hod_user where zipcode = '{zipcode}'"
+    query = f"select id, content, species from hod_user where zipcode = '{zipcode}'"
     return pd.read_sql_query(query, con=engine)
 
 def get_hod_matches(species, zipcode):
