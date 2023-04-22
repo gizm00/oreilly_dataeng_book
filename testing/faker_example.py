@@ -33,11 +33,11 @@ def generate_id():
     return f"bird-surv-{''.join(id_values)}"
 
 def create_test_data_ids(length=10):
-    mock_data = []
+    fake_data = []
     for _ in range(length):
-        description, species = fake.description() 
+        description = fake.description() 
         email = fake.email()
-        mock_data.append(
+        fake_data.append(
             {
                 "id": generate_id(),
                 "user": email,
@@ -47,6 +47,7 @@ def create_test_data_ids(length=10):
                 "count": random.randint(0, 20),
             }
         )
+    return fake_data
 
 class DescriptionProvider(BaseProvider):
     def description_cases(self):

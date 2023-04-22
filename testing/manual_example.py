@@ -2,7 +2,7 @@
 import util
 
 def create_test_data():
-    mock_data = [
+    fake_data = [
         {
             "user": "something@email.com",
             "location": "45.12431, 121.12453",
@@ -32,4 +32,4 @@ def create_test_data():
         {"user": "third@email.com", "species": ""},  
     ]
 
-    return mock_data, expected
+    return fake_data, expected
